@@ -1,9 +1,11 @@
 # MLOps Practitioner Course Artifacts
 
-[![Affiliation](https://shields.io)](https://zomra.io)
-[![Curriculum](https://shields.io)](https://zomra.io)
-[![Python](https://shields.io)](https://python.org)
-[![Docker](https://shields.io)](https://docker.com)
+<!-- MIT/Stanford Academic Style Big Badges (for-the-badge style) -->
+![Affiliation](https://shields.io)
+![Curriculum](https://shields.io)
+![Python](https://shields.io)
+![Docker](https://shields.io)
+![License](https://shields.io)
 
 This repository contains the official reference implementations, production-grade architectures, and core engineering modules completed during **The MLOps Practitioner** curriculum, powered by **Zomra** and **MLOps MENA Community**. 
 
@@ -102,7 +104,7 @@ docker-compose up -d
 ### 🔹 Module 6: Observability & Drift Detection
 * Monitoring production runtime and catching concept, data, and embedding drift.
 
-### 🔹 Module 7: End-to-End Capstone Project
+### 🔹 Module 7: End-To-End Capstone Project
 * Constructing and deploying a fully automated, scalable production pipeline.
 
 ---
