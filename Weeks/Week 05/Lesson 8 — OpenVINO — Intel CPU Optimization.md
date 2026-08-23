@@ -1,0 +1,1 @@
+Intel's inference toolkit for maximum CPU performance. Converting ONNX → OpenVINO IR. INT8 quantization with Post-Training Optimization Toolkit (POT). AVX-512 SIMD utilization. 3–5× faster than ONNX Runtime on Intel Ice Lake and Sapphire Rapids. The right choice for cloud CPU fleets and on-premise Intel hardware.
