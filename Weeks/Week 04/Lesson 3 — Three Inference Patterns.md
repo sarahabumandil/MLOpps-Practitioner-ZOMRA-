@@ -1,0 +1,1 @@
+Web service (REST API for real-time requests), batch scoring (score millions of rows on a schedule), and streaming inference (event-driven predictions via Kafka or Redis Streams). When to use each, with real-world examples from Uber, Spotify, and PayPal
