@@ -1,0 +1,1 @@
+Training a small student model to mimic a large teacher model. Soft labels vs hard labels. Temperature scaling. Real examples: Google Translate (600M teacher → 77M student), MobileBERT (BERT teacher → 25M student). How to choose student architecture size and measure transfer quality.
