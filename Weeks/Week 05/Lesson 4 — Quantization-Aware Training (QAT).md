@@ -1,0 +1,1 @@
+When PTQ accuracy loss is unacceptable. Simulating quantization during training so the model learns to be robust to it. The PyTorch QAT workflow. When QAT is worth the extra training cost vs PTQ — and when it is not.
