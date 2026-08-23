@@ -1,0 +1,1 @@
+Removing weights that contribute least to model output. Structured vs unstructured pruning. Magnitude-based pruning with PyTorch. Iterative pruning with fine-tuning between rounds. What happens to accuracy at 30%, 50%, and 70% sparsity — and where the practical ceiling is for most production models.
