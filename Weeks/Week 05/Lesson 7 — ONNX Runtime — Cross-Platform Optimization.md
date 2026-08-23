@@ -1,0 +1,1 @@
+The universal runtime that works on any hardware. Graph optimizations, operator fusion, and execution providers (CPU, CUDA, TensorRT, OpenVINO). Converting from PyTorch to ONNX correctly with dynamic axes. Why ONNX Runtime is the right default for CPU-serving environments.
