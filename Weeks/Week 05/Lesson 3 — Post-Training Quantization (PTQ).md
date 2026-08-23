@@ -1,0 +1,1 @@
+Reducing weight precision from FP32 → FP16 → INT8 after training is complete. Dynamic quantization vs static quantization. Calibration datasets — why you only need ~300 samples. Accuracy cost: typically under 0.5% top-1 on classification models. Implementation with ONNX Runtime and TensorRT INT8 calibration.
