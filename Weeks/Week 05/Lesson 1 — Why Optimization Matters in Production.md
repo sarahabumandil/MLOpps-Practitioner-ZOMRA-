@@ -1,0 +1,1 @@
+The real cost of unoptimized inference: GPU bills, latency SLAs, and edge deployment constraints. The optimization journey for ResNet-50: PyTorch eager → ONNX → TensorRT FP16 → TensorRT INT8 = 7–10× speedup on the same hardware. How to measure correctly before and after.
