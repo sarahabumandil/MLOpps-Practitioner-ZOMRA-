@@ -1,0 +1,1 @@
+Converting a PyTorch or ONNX model to a TensorRT engine. Layer fusion, memory planning, kernel auto-tuning. FP16 and INT8 engine builds. The full benchmark path on ResNet-50: 180ms → 38ms on A100. Limitations: engines are GPU-specific and not portable across hardware generations.
