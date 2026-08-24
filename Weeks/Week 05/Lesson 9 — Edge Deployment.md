@@ -1,0 +1,1 @@
+Running optimized models outside the data center. TFLite for Android and embedded Linux. Core ML for Apple devices. GGUF format for running LLMs on laptops with llama.cpp. NVIDIA Jetson for edge GPU inference. The size vs accuracy tradeoff at each compression level and how to validate model quality on-device.
