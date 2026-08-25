@@ -1,0 +1,1 @@
+Using PSI on prediction distributions as an early warning signal before ground truth arrives. The PayPal real example. Connecting prediction drift detection to the Continuous Training trigger from Module 2.
