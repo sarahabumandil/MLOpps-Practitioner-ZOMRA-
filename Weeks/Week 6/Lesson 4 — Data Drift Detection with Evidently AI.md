@@ -1,0 +1,1 @@
+Writing DataDriftPreset reports, TestSuite with pass/fail thresholds, integrating into an Airflow PythonOperator, and raising alerts when more than 30% of features drift. The difference between Report (for humans) and TestSuite (for machines).
