@@ -1,0 +1,1 @@
+Why classical INT8 quantization breaks on large language models — activation outliers, attention pattern sensitivity, and the weight distribution problem. AWQ (Activation-aware Weight Quantization) and GPTQ as solutions. Running Llama-3-70B on a single A100 with AWQ-4bit. The accuracy vs VRAM tradeoff table from 16-bit to 4-bit.
