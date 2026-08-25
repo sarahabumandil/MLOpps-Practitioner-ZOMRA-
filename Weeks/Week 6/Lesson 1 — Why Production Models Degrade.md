@@ -1,0 +1,1 @@
+The four failure modes with real company examples: data drift (Uber during COVID), concept drift (Twitter sentiment post-2020), label drift (PayPal fraud rate during promotions), and embedding drift (Notion AI after launch). Why none of these throw an error.
