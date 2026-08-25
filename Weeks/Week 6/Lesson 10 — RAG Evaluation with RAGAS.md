@@ -1,0 +1,1 @@
+The four metrics that measure RAG quality without human labels: faithfulness, answer relevancy, context recall, and context precision. Running automated evaluation, logging scores to Langfuse, and alerting when any metric drops below threshold
