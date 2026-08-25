@@ -1,0 +1,1 @@
+Why LLM observability is fundamentally different from classical ML monitoring — no ground truth, traces replace metrics, cost is a first-class KPI. Instrumenting a RAG pipeline with the @observe decorator. Traces, spans, scores, and the self-hosted setup.
