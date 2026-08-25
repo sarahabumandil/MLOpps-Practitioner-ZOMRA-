@@ -1,0 +1,1 @@
+Six methods every ML engineer should know: KS test (continuous features), Chi-square (categorical features), PSI (prediction scores — the finance industry standard), KL divergence (probability distributions), Page-Hinkley (streaming concept drift), and MMD (high-dimensional embedding drift). When to use each and what its limitations are.
