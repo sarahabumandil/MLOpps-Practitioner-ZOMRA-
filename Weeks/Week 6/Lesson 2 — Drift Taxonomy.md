@@ -1,0 +1,1 @@
+The four drift types visualized side by side — what changes in each (P(X), P(Y|X), P(Y), semantic space), what signal appears first, whether ground truth is required to detect it, and which tool handles each.
