@@ -1,0 +1,1 @@
+How to measure correctly: latency (p50/p95/p99), throughput (req/s), GPU utilization, memory footprint, and accuracy delta. The optimization decision framework — which technique to try first based on your bottleneck. When to stop optimizing. How to document optimization decisions for your team so they can be reproduced and audited.
