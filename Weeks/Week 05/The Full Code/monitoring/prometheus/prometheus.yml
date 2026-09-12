@@ -1,0 +1,48 @@
+# Prometheus scrape config for the session-4 monitoring stack.
+
+global:
+  # 15s is the Prometheus default and fine for a local API. Drift gauges only
+  # change once per Airflow run, but latency histograms need the resolution.
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    session: "4"
+    env: local
+
+rule_files:
+  - /etc/prometheus/alert_rules.yml
+
+scrape_configs:
+  # ── Prometheus scraping itself — free liveness check ──────────
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # ── The model API instrumented by P_G_monitoring.py ───────────
+  # prometheus_client's start_http_server() exposes /metrics on its own port.
+  # 8001 is used here because session 3's nginx already holds host port 8000:
+  #     start_http_server(8001)
+  # If instead you mounted the metrics endpoint on the FastAPI app itself
+  # (prometheus_fastapi_instrumentator), point this at 8000 and drop the
+  # separate metrics server.
+  - job_name: model-api
+    metrics_path: /metrics
+    # A scrape carrying more than sample_limit samples is rejected WHOLE and the
+    # target is marked down. That looks drastic until you consider the
+    # alternative: a cardinality explosion (make incident-04) with no limit set
+    # grows the head block until Prometheus is OOM-killed, taking every other
+    # target's history with it. The limit turns a server-wide outage into one
+    # loud, local, recoverable failure that names itself in Status > Targets.
+    #
+    # Why 5000 and not a round 100000. A healthy scrape of this service is 28
+    # samples, so 5000 is ~180x headroom. It is also reachable in roughly two
+    # minutes at the 20 rps `make traffic` generates — every ride_id mints TWO
+    # samples, _total and _created — which keeps incident 04 inside its
+    # 10-minute detection budget. Size this to YOUR traffic: the rule is
+    # "comfortably above healthy, comfortably below the memory you can spare".
+    sample_limit: 5000
+    static_configs:
+      - targets: ["host.docker.internal:8001"]
+        labels:
+          service: ride-duration-api
+          model: rf_model

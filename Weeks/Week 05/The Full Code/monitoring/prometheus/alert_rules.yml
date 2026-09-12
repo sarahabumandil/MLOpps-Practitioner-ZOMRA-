@@ -1,0 +1,146 @@
+# Alert rules mirroring the thresholds used by the drift scripts.
+# View firing alerts at http://localhost:9090/alerts
+#
+# No Alertmanager is wired up in this stack — alerts fire and are visible in the
+# Prometheus UI and as Grafana annotations, but nothing pages anyone. Add an
+# `alerting:` block pointing at an Alertmanager service when you want delivery.
+
+groups:
+  - name: model-drift
+    rules:
+      # Mirrors the gate in label_predicion_drift.py (PSI > 0.25 → retrain) and
+      # the PromQL comment in P_G_monitoring.py. `for: 30m` avoids paging on a
+      # single Airflow run that wrote a transient value.
+      - alert: FeatureDriftHigh
+        expr: feature_psi_score > 0.25
+        for: 30m
+        labels:
+          severity: critical
+        annotations:
+          runbook: "https://github.com/MLOpsMENACommunity/mlops_practitioner_course/blob/main/session_4/RUNBOOK.md#featuredrifthigh"
+          summary: "PSI drift on {{ $labels.feature }}"
+          description: >-
+            Feature {{ $labels.feature }} has PSI {{ $value | printf "%.3f" }}
+            (> 0.25). Investigate and consider retraining.
+
+      # The 0.10–0.25 "watch it" band from the README's PSI table.
+      - alert: FeatureDriftModerate
+        expr: feature_psi_score > 0.10 and feature_psi_score <= 0.25
+        for: 2h
+        labels:
+          severity: warning
+        annotations:
+          runbook: "https://github.com/MLOpsMENACommunity/mlops_practitioner_course/blob/main/session_4/RUNBOOK.md#featuredrifthigh"
+          summary: "Moderate PSI drift on {{ $labels.feature }}"
+          description: >-
+            Feature {{ $labels.feature }} PSI is {{ $value | printf "%.3f" }} —
+            moderate shift, no action required yet.
+
+  - name: model-api
+    rules:
+      - alert: PredictLatencyP95High
+        expr: >-
+          histogram_quantile(0.95,
+            rate(api_request_latency_seconds_bucket{endpoint="/predict"}[5m])
+          ) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          runbook: "https://github.com/MLOpsMENACommunity/mlops_practitioner_course/blob/main/session_4/RUNBOOK.md#predictlatencyp95high"
+          summary: "p95 /predict latency above 500ms"
+          description: "p95 is {{ $value | printf \"%.3f\" }}s over the last 5m."
+
+      # A silent model is as bad as a wrong one — catches the API being up but
+      # serving nothing, which the drift scripts cannot see.
+      - alert: NoPredictionTraffic
+        expr: rate(model_prediction_duration_min_count[15m]) == 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          runbook: "https://github.com/MLOpsMENACommunity/mlops_practitioner_course/blob/main/session_4/RUNBOOK.md#nopredictiontraffic"
+          summary: "No predictions served in 15 minutes"
+          description: "The model API is reachable but is not serving predictions."
+
+      - alert: ModelAPIDown
+        expr: up{job="model-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          runbook: "https://github.com/MLOpsMENACommunity/mlops_practitioner_course/blob/main/session_4/RUNBOOK.md#modelapidown"
+          summary: "Model API scrape target is down"
+          description: "Prometheus cannot reach the /metrics endpoint."
+
+  # ══════════════════════════════════════════════════════════════
+  #  Session 4 incident engine — one alert per injectable failure.
+  #
+  #  Severity follows one rule: PAGE ON SYMPTOMS, WARN ON CAUSES.
+  #  A symptom is something a user is experiencing right now (the API is
+  #  down, nothing is being served). A cause is something that will hurt
+  #  later if ignored (drift climbing, disk filling). Page on causes and
+  #  people learn to ignore the pager; warn on symptoms and nobody comes.
+  # ══════════════════════════════════════════════════════════════
+
+  - name: session4-incidents
+    rules:
+      # Incident 15. The most dangerous alert in the file, because the system it
+      # describes looks perfectly healthy: no labels means MAE, the drift-vs-
+      # accuracy comparison and the retrain gate's enough_new_labels() all freeze
+      # at their last good value. A flat quality metric and a dead one are
+      # indistinguishable without this.
+      - alert: FeedbackSignalDead
+        expr: rate(feedback_total[6h]) == 0
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          runbook: "https://github.com/MLOpsMENACommunity/mlops_practitioner_course/blob/main/session_4/RUNBOOK.md#feedbacksignaldead"
+          summary: "No late labels received in 6 hours"
+          description: >-
+            The feedback endpoint has accepted nothing for 6h. Every downstream
+            quality metric is now frozen rather than healthy. Monitor the monitoring.
+
+      # Broad drift: several features moving at once usually means the FEED
+      # changed, not the world. Warn, don't page — nobody fixes drift at 3am.
+      - alert: HighDriftedFeatures
+        expr: count(feature_psi_score > 0.25) > 2
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          runbook: "https://github.com/MLOpsMENACommunity/mlops_practitioner_course/blob/main/session_4/RUNBOOK.md#highdriftedfeatures"
+          summary: "{{ $value }} features above the PSI action band"
+          description: >-
+            More than two features drifted at once against the frozen reference.
+            One feature is a feature problem; three at once is a pipeline problem.
+
+      # Incident 10. Two versions answering the same endpoint means an unfinished
+      # canary — and every aggregate metric is now a blend of two models.
+      - alert: MultipleVersionsServing
+        expr: count(count by (version) (model_version_info)) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          runbook: "https://github.com/MLOpsMENACommunity/mlops_practitioner_course/blob/main/session_4/RUNBOOK.md#multipleversionsserving"
+          summary: "More than one model version is serving"
+          description: >-
+            {{ $value }} versions are live behind one endpoint. Until this is
+            resolved, every latency and score panel is an average across models.
+
+      # Incident 13. The only alert here that fires BEFORE the outage: it
+      # extrapolates the trend instead of waiting for a threshold. A disk at 85%
+      # tells you nothing; a disk losing 4 GB/hour tells you when it dies.
+      - alert: DiskFillPredicted
+        expr: predict_linear(disk_free_bytes[6h], 4 * 3600) < 0
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          runbook: "https://github.com/MLOpsMENACommunity/mlops_practitioner_course/blob/main/session_4/RUNBOOK.md#diskfillpredicted"
+          summary: "Log volume predicted to fill within 4 hours"
+          description: >-
+            Linear extrapolation of the last 6h of disk_free_bytes crosses zero
+            inside 4h. Rotate or expand before it becomes an outage, not after.
