@@ -1,0 +1,33 @@
+stages:
+  prepare:
+    cmd: python -m arasent.prepare
+    deps:
+      - ../data/raw/arabic_reviews.csv
+      - ../src/arasent/data.py
+      - ../src/arasent/prepare.py
+    outs:
+      - ../data/processed/train.parquet
+      - ../data/processed/val.parquet
+
+  train:
+    cmd: python -m arasent.train
+    deps:
+      - ../data/processed/train.parquet
+      - ../data/processed/val.parquet
+      - ../src/arasent/train.py
+      - ../src/arasent/model.py
+    outs:
+      - ../models/baseline_tfidf_lr.joblib
+    metrics:
+      - ../reports/train_metrics.json:
+          cache: false
+
+  evaluate:
+    cmd: python -m arasent.evaluate
+    deps:
+      - ../models/baseline_tfidf_lr.joblib
+      - ../data/processed/val.parquet
+      - ../src/arasent/evaluate.py
+    metrics:
+      - ../reports/eval_metrics.json:
+          cache: false
