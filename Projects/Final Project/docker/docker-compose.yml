@@ -1,0 +1,44 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: arasent-api:0.1.0
+    ports:
+      - "8000:8000"
+    environment:
+      ARASENT_LOG_LEVEL: INFO
+      ARASENT_MODEL_BACKEND: baseline
+    volumes:
+      - ../models:/app/models
+    restart: unless-stopped
+
+  mlflow:
+    image: python:3.11-slim
+    command: >
+      bash -c "pip install --no-cache-dir mlflow==2.14.1 &&
+               mlflow server --host 0.0.0.0 --port 5000
+               --backend-store-uri sqlite:///mlflow-data/mlflow.db
+               --default-artifact-root /mlflow-data/artifacts"
+    ports:
+      - "5000:5000"
+    volumes:
+      - ../mlflow-data:/mlflow-data
+    working_dir: /mlflow-data
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ../monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    command: ["--config.file=/etc/prometheus/prometheus.yml"]
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ../monitoring/grafana/provisioning:/etc/grafana/provisioning
