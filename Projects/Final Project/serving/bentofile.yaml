@@ -1,0 +1,14 @@
+service: "service:svc"
+labels:
+  project: dentiligence-final-project
+  track: "1-deep-learning"
+include:
+  - "service.py"
+  - "../src/arasent/**/*.py"
+  - "../models/baseline_tfidf_lr.joblib"
+python:
+  packaging_format: wheel
+  requirements_txt: "../requirements-serving.txt"
+docker:
+  distro: debian
+  python_version: "3.11"
