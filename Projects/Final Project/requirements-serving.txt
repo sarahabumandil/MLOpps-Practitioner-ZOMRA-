@@ -1,0 +1,5 @@
+scikit-learn>=1.4
+pandas>=2.2
+joblib>=1.4
+pydantic-settings>=2.2
+python-json-logger>=2.0

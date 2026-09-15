@@ -1,0 +1,53 @@
+[project]
+name = "arasent"
+version = "0.1.0"
+description = "Final Project (Track 1) — Arabic e-commerce review sentiment analysis. Dentiligence / MLOps Practitioner."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "scikit-learn>=1.4",
+    "pandas>=2.2",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "pydantic>=2.6",
+    "pydantic-settings>=2.2",
+    "python-json-logger>=2.0",
+    "numpy>=1.26",
+    "mlflow>=2.12",
+    "prometheus-client>=0.20",
+    "joblib>=1.4",
+    "skl2onnx>=1.16",
+    "onnxruntime>=1.17",
+]
+
+# The real AraBERT fine-tune (notebooks/finetune_arabert_colab.ipynb) needs these —
+# split out because they require a GPU runtime (Colab/Kaggle) to be usable, and are
+# heavy to install where they won't be used.
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-cov>=4.1", "ruff>=0.3", "black>=24.0", "httpx>=0.27"]
+transformer = ["transformers>=4.40", "torch>=2.2", "datasets>=2.19", "accelerate>=0.30"]
+serving = ["bentoml>=1.4", "locust>=2.27"]
+dvc = ["dvc>=3.50"]
+
+[project.scripts]
+arasent-train = "arasent.train:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "--cov=src/arasent --cov-report=term-missing --cov-fail-under=70"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+# model_transformer.py needs a GPU + a fine-tuned checkpoint (Colab/Kaggle) to import
+# and run at all — it is validated in notebooks/finetune_arabert_colab.ipynb instead,
+# not by this local unit-test suite.
+omit = ["src/arasent/model_transformer.py"]
+
+[tool.ruff]
+line-length = 100

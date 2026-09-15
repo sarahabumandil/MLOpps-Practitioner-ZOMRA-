@@ -1,0 +1,14 @@
+.env
+__pycache__/
+.venv/
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+*.egg-info/
+mlruns/
+mlflow.db
+mlflow-data/
+data/raw/*.csv
+models/*.joblib
+models/*.onnx
+models/arabert-sentiment/

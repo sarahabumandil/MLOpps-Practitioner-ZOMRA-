@@ -1,0 +1,14 @@
+.git
+.venv
+notebooks/
+data/
+tests/
+__pycache__
+*.ipynb
+.pytest_cache
+.ruff_cache
+htmlcov
+*.egg-info
+mlruns/
+mlflow.db
+mlflow-data/
