@@ -1,9 +1,9 @@
-# arasent — Arabic E-Commerce Review Sentiment Analysis
+# arasent arabic e commerce review sentiment analysis
 
-**Final Project · Track 1 (Deep Learning) · MLOps Practitioner (ITI × MLOps MENA Community)**
-Built by dentiligence, following the official rubric literally: an Arabic e-commerce review
-gets classified as **negative / neutral / positive**, served through the same infrastructure
-built across all 5 mini projects.
+final project track 1 deep learning mlops practitioner iti x mlops mena community
+
+built by dentiligence following the official rubric literally an arabic e commerce review gets classified as negative neutral or positive served through the same infrastructure built across all 5 mini projects
+
 
 ## Honesty clause (read this first)
 
