@@ -1,31 +1,8 @@
-"""Loads the Arabic e-commerce review dataset.
-
-Source: https://www.kaggle.com/datasets/abedkhooli/arabic-100k-reviews
-(file `ar_reviews_100k.tsv`, ~100k rows, columns `label` + `text`, labels Positive/Mixed/Negative).
-
-Three ways to get the data in place (any one works):
-  1. `python -m arasent.download_data`        -> downloads via kagglehub, writes
-                                                data/raw/arabic_reviews.csv
-  2. Put the file there yourself              -> data/raw/arabic_reviews.csv (CSV) or
-                                                data/raw/ar_reviews_100k.tsv (TSV)
-  3. ARASENT_AUTO_DOWNLOAD=true               -> load_raw_reviews() downloads it on demand
-
-The separator (comma / tab) is auto-detected. Labels may be strings (Positive / Mixed /
-Negative), 0-2 class ids, or 1-5 star ratings (1-2 -> negative, 3 -> neutral, 4-5 -> positive).
-
-If the file is not present, we fall back to a small synthetic Arabic-review generator so
-the rest of the pipeline (packaging, MLflow, DVC, API, Docker, tests) can be built and
-verified end to end without network access. Swap in the real file for the real numbers —
-same as Mini Project 1's NYC-taxi synthetic fallback.
-"""
 from __future__ import annotations
-
 from pathlib import Path
-
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-
 from arasent.config import settings
 from arasent.logging_conf import get_logger
 
@@ -34,28 +11,9 @@ logger = get_logger(__name__)
 TEXT_COLUMN_CANDIDATES = ["text", "review", "review_text", "Review"]
 LABEL_COLUMN_CANDIDATES = ["label", "rating", "sentiment", "Rating"]
 
-_POSITIVE_PHRASES = [
-    "المنتج رائع جدا وسريع في التوصيل",
-    "جودة ممتازة وأنصح بالشراء",
-    "تجربة شراء رائعة والخدمة سريعة",
-    "المنتج مطابق للوصف وسعره ممتاز",
-    "راضية جدا عن الطلب وسأكرر الشراء",
-]
-_NEGATIVE_PHRASES = [
-    "المنتج سيء جدا ولا يستحق السعر",
-    "التوصيل متأخر جدا والخدمة سيئة",
-    "المنتج وصل مكسور ولم يتم استرجاع المال",
-    "جودة رديئة ولا أنصح به إطلاقا",
-    "تجربة محبطة ولن أشتري مرة أخرى",
-]
-_NEUTRAL_PHRASES = [
-    "المنتج عادي لا بأس به",
-    "التوصيل في الوقت المتوقع والمنتج مقبول",
-    "لا سيء ولا ممتاز، متوسط الجودة",
-    "السعر مناسب لكن الجودة متوسطة",
-    "المنتج كما هو متوقع بدون مفاجآت",
-]
-
+_POSITIVE_PHRASES = ["المنتج رائع جدا وسريع في التوصيل","جودة ممتازة وأنصح بالشراء","تجربة شراء رائعة والخدمة سريعة","المنتج مطابق للوصف وسعره ممتاز","راضية جدا عن الطلب وسأكرر الشراء",]
+_NEGATIVE_PHRASES = ["المنتج سيء جدا ولا يستحق السعر","التوصيل متأخر جدا والخدمة سيئة","المنتج وصل مكسور ولم يتم استرجاع المال","جودة رديئة ولا أنصح به إطلاقا","تجربة محبطة ولن أشتري مرة أخرى",]
+_NEUTRAL_PHRASES = ["المنتج عادي لا بأس به","التوصيل في الوقت المتوقع والمنتج مقبول","لا سيء ولا ممتاز، متوسط الجودة","السعر مناسب لكن الجودة متوسطة","المنتج كما هو متوقع بدون مفاجآت",]
 
 def _generate_synthetic_reviews(n: int = 3000, seed: int = 42) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
@@ -66,54 +24,37 @@ def _generate_synthetic_reviews(n: int = 3000, seed: int = 42) -> pd.DataFrame:
     logger.info("generated_synthetic_reviews", extra={"n_rows": n})
     return df
 
-
 def _find_column(df: pd.DataFrame, candidates: list[str]) -> str | None:
     for c in candidates:
         if c in df.columns:
             return c
     return None
 
-
-_STRING_LABELS = {
-    "negative": 0,
-    "neg": 0,
-    "mixed": 1,  # the Kaggle dataset calls the middle class "Mixed"
-    "neutral": 1,
-    "positive": 2,
-    "pos": 2,
-}
-
+_STRING_LABELS = {"negative": 0,"neg": 0,"mixed": 1, "neutral": 1,"positive": 2,"pos": 2,}
 
 def _rating_to_label(rating: float) -> int:
     if rating <= 2:
-        return 0  # negative
+        return 0  
     if rating == 3:
-        return 1  # neutral
-    return 2  # positive
-
+        return 1  
+    return 2  
 
 def _normalize_labels(labels: pd.Series) -> pd.Series:
-    """Map string labels, 0-2 class ids or 1-5 star ratings to ints 0/1/2."""
     if labels.dtype == object or pd.api.types.is_string_dtype(labels):
         lowered = labels.astype(str).str.strip().str.lower()
         if lowered.isin(_STRING_LABELS.keys()).all():
             return lowered.map(_STRING_LABELS).astype(int)
-        labels = pd.to_numeric(lowered, errors="coerce")  # e.g. "4" -> 4.0, junk -> NaN
+        labels = pd.to_numeric(lowered, errors="coerce")  
     labels = labels.dropna()
-    if labels.max() > 2:  # looks like a 1-5 star rating, not a 0-2 class label
+    if labels.max() > 2:  
         return labels.apply(_rating_to_label).astype(int)
     return labels.astype(int)
 
-
 def _read_table(path: Path) -> pd.DataFrame:
-    # Sniff comma vs tab from the header line, then use the fast C parser (the python
-    # engine's sep=None sniffing is far too slow on a 54 MB file). Quoting stays on so
-    # multi-line reviews survive; malformed lines are skipped instead of killing the load.
     with open(path, encoding="utf-8") as f:
         header = f.readline()
     sep = "\t" if header.count("\t") > header.count(",") else ","
     return pd.read_csv(path, sep=sep, on_bad_lines="skip", encoding="utf-8")
-
 
 def _find_local_data_file() -> Path | None:
     for candidate in (settings.raw_data_path, settings.raw_data_path.parent / settings.kaggle_file):
@@ -121,42 +62,24 @@ def _find_local_data_file() -> Path | None:
             return candidate
     return None
 
-
 def download_from_kaggle() -> Path:
-    """Download the Kaggle dataset with kagglehub and return the local file path.
-
-    Uses the same call as Kaggle's own snippet (KaggleDatasetAdapter.PANDAS) and then
-    writes data/raw/arabic_reviews.csv so DVC and the rest of the pipeline see a normal file.
-    """
     import kagglehub
     from kagglehub import KaggleDatasetAdapter
-
-    logger.info(
-        "downloading_from_kaggle",
-        extra={"dataset": settings.kaggle_dataset, "file": settings.kaggle_file},
-    )
-    # `dataset_load` is the new name (kagglehub>=0.3.13); `load_dataset` is the old one.
+    logger.info("downloading_from_kaggle",extra={"dataset": settings.kaggle_dataset, "file": settings.kaggle_file},)
     loader = getattr(kagglehub, "dataset_load", None) or kagglehub.load_dataset
-    df = loader(
-        KaggleDatasetAdapter.PANDAS,
-        settings.kaggle_dataset,
-        settings.kaggle_file,
-        pandas_kwargs={"sep": "\t"},
-    )
+    df = loader(KaggleDatasetAdapter.PANDAS,settings.kaggle_dataset,settings.kaggle_file,pandas_kwargs={"sep": "\t"},)
     settings.raw_data_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(settings.raw_data_path, index=False)
     logger.info("saved_raw_csv", extra={"path": str(settings.raw_data_path), "n_rows": len(df)})
     return settings.raw_data_path
-
 
 def load_raw_reviews() -> pd.DataFrame:
     path = _find_local_data_file()
     if path is None and settings.auto_download:
         try:
             path = download_from_kaggle()
-        except Exception as exc:  # no internet / no kaggle credentials / kagglehub missing
+        except Exception as exc:  
             logger.warning("kaggle_download_failed", extra={"error": str(exc)})
-
     if path is not None:
         logger.info("loading_raw_data", extra={"path": str(path)})
         raw = _read_table(path)
@@ -165,30 +88,23 @@ def load_raw_reviews() -> pd.DataFrame:
         if text_col is None or label_col is None:
             raise ValueError(
                 f"Could not find text/label columns in {path}. "
-                f"Expected one of {TEXT_COLUMN_CANDIDATES} and one of {LABEL_COLUMN_CANDIDATES}."
-            )
+                f"Expected one of {TEXT_COLUMN_CANDIDATES} and one of {LABEL_COLUMN_CANDIDATES}." )
         df = raw[[text_col, label_col]].rename(columns={text_col: "text", label_col: "label"})
         df = df.dropna().reset_index(drop=True)
         df["label"] = _normalize_labels(df["label"])
         if settings.max_rows and len(df) > settings.max_rows:
             df = df.sample(n=settings.max_rows, random_state=settings.random_seed)
         return df.dropna().reset_index(drop=True)
-
-    logger.warning(
-        "raw_data_missing_using_synthetic_data", extra={"path": str(settings.raw_data_path)}
-    )
+    logger.warning("raw_data_missing_using_synthetic_data", extra={"path": str(settings.raw_data_path)})
     return _generate_synthetic_reviews()
 
-
 def clean_text(text: str) -> str:
-    """Minimal Arabic text normalization: strip tatweel, normalize alef/yeh variants."""
     text = str(text).strip()
-    text = text.replace("ـ", "")  # tatweel
+    text = text.replace("ـ", "")
     for alef_variant in ["أ", "إ", "آ"]:
         text = text.replace(alef_variant, "ا")
     text = text.replace("ى", "ي").replace("ة", "ه")
     return text
-
 
 def load_train_val_split(
     test_size: float | None = None, seed: int | None = None
@@ -196,25 +112,14 @@ def load_train_val_split(
     df = load_raw_reviews()
     df["text"] = df["text"].map(clean_text)
     df = df[df["text"].str.len() > 0].reset_index(drop=True)
-
     resolved_test_size = test_size or settings.test_size
     n_test = round(len(df) * resolved_test_size)
     class_counts = df["label"].value_counts()
-
-    # stratify requires: (a) more than one class, (b) every class has >= 2 members (so it
-    # can appear on both sides of the split), and (c) the test set is large enough to hold
-    # at least one row per class. Tiny datasets (e.g. a smoke-test CSV) fail all three —
-    # fall back to a plain random split rather than crashing the whole pipeline.
-    can_stratify = (
-        df["label"].nunique() > 1
-        and class_counts.min() >= 2
-        and n_test >= df["label"].nunique()
-    )
+    can_stratify = ( df["label"].nunique() > 1and class_counts.min() >= 2 and n_test >= df["label"].nunique())
 
     train_df, val_df = train_test_split(
         df,
         test_size=resolved_test_size,
         random_state=seed or settings.random_seed,
-        stratify=df["label"] if can_stratify else None,
-    )
+        stratify=df["label"] if can_stratify else None,)
     return train_df.reset_index(drop=True), val_df.reset_index(drop=True)
