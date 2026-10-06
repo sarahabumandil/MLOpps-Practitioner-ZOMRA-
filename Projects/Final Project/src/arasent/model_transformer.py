@@ -1,16 +1,4 @@
-"""AraBERT-backed SentimentClassifier — the real Track-1 model.
 
-Implements the exact same interface as arasent.model.SentimentClassifier
-(predict_one / predict_batch / save / load / model_version / framework), so it is a
-drop-in replacement everywhere else in this repo (API, BentoML runner, ONNX export,
-benchmark harness). Nothing outside this file needs to change to switch models — only
-`ARASENT_MODEL_BACKEND=transformer` (see api/main.py).
-
-Requires the `transformer` extra: `pip install -e ".[transformer]"`. Fine-tune it first
-with notebooks/finetune_arabert_colab.ipynb on a GPU runtime (Colab/Kaggle) — this
-environment has no GPU and no HuggingFace Hub access, so the checkpoint must be produced
-elsewhere and copied into models/arabert-sentiment/.
-"""
 from __future__ import annotations
 
 import functools
