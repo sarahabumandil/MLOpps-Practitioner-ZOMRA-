@@ -1,7 +1,4 @@
-"""DVC 'prepare' stage. Writes the train/val split to data/processed/ so it is a
-versioned, cacheable DVC output that `train` and `evaluate` depend on — instead of every
-stage silently re-deriving its own split from the raw source.
-"""
+
 from __future__ import annotations
 
 from pathlib import Path
