@@ -1,6 +1,7 @@
 # The MLOps Practitioner : Course Notes
 > Cohort 1 · Aug 15 → Oct 2, 2026 · 7 weeks · 5 live lessons · Free
 just hosting my brain dump for The MLOps Practitioner course by MLOps MENA.cohort 1 / aug 15 – oct 2, 2026 / 7 weeks of pure suffering (jk) / 5 live sessions / cost: $0 absolute steal fr
+<img src="./images/IMG_20261023_170837.jpg" alt="certification" width="600"/>
 
 ![Status](https://img.shields.io/badge/status-running-brightgreen) ![Cohort](https://img.shields.io/badge/cohort-1-blue) ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 ---
